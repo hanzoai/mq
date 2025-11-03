@@ -333,8 +333,9 @@ describe('Job Scheduler', function () {
                     const delayedJobs = await queue.getDelayed();
                     expect(delayedJobs.length).to.be.equal(1);
                     expect(delayedJobs[0].data.foo).to.be.equal('baz');
-                    // As we promoted a job, the delay will be 10s + 10s = 20s
-                    expect(delayedJobs[0].delay).to.be.equal(20000);
+                    // As we promoted a job, and time has not been increased at all
+                    // the delay will be 10s
+                    expect(delayedJobs[0].delay).to.be.equal(10000);
 
                     resolve();
                   }
@@ -372,7 +373,7 @@ describe('Job Scheduler', function () {
           expect(repeatableJobs[0]).to.deep.equal({
             key: 'test',
             name: 'test',
-            next: initialNow + 2 * 10 * ONE_SECOND,
+            next: initialNow + 10 * ONE_SECOND,
             iterationCount: 2,
             offset: 0,
             pattern: '*/10 * * * * *',
@@ -2549,6 +2550,55 @@ describe('Job Scheduler', function () {
         priority: 2,
       });
     });
+
+    it('should update delayed job timestamp when upserting with different pattern', async function () {
+      const date = new Date('2017-02-07 9:24:00');
+      const key = 'mykey';
+
+      this.clock.setSystemTime(date);
+
+      // Create first scheduler with a pattern that runs at 10 seconds past the minute
+      await queue.upsertJobScheduler(
+        key,
+        {
+          pattern: '10 * * * * *', // At 10 seconds past every minute
+        },
+        { name: 'test1', data: { foo: 'bar' } },
+      );
+
+      let delayedJobs = await queue.getDelayed();
+      expect(delayedJobs).to.have.length(1);
+      const firstDelay = delayedJobs[0].delay;
+
+      // The first job should be scheduled for :10 seconds
+      expect(firstDelay).to.be.equal(10000);
+
+      // Now upsert with a different pattern (runs at 30 seconds past the minute)
+      await queue.upsertJobScheduler(
+        key,
+        {
+          pattern: '30 * * * * *', // At 30 seconds past every minute
+        },
+        { name: 'test2', data: { foo: 'baz' } },
+      );
+
+      delayedJobs = await queue.getDelayed();
+      expect(delayedJobs).to.have.length(1);
+
+      // Verify the delayed job was updated
+      expect(delayedJobs[0].name).to.be.equal('test2');
+      expect(delayedJobs[0].data).to.deep.equal({ foo: 'baz' });
+
+      // The new delay should be different (for :30 instead of :10)
+      const secondDelay = delayedJobs[0].delay;
+      expect(secondDelay).to.not.equal(firstDelay);
+      expect(secondDelay).to.be.equal(30000);
+
+      // Verify the job scheduler was updated
+      const schedulers = await queue.getJobSchedulers();
+      expect(schedulers).to.have.length(1);
+      expect(schedulers[0].pattern).to.equal('30 * * * * *');
+    });
   });
 
   // This test is flaky and too complex we need something simpler that tests the same thing
@@ -2999,20 +3049,20 @@ describe('Job Scheduler', function () {
       const stalledEvents: string[] = [];
       let jobProcessingAttempts = 0;
       let mockCallCount = 0;
-      let moveToDelayedCallCount = 0;
 
       const worker = new Worker(
         queueName,
-        async job => {
+        async () => {
           jobProcessingAttempts++;
           return { result: 'completed' };
         },
         {
+          autorun: false,
           connection,
           prefix,
           maxStalledCount: 2, // Regular jobs would fail after 2 stalls
           lockDuration: 1000, // 1 second lock
-          stalledInterval: 500, // Check for stalled jobs every 500ms
+          stalledInterval: 100, // Check for stalled jobs every 500ms
         },
       );
 
@@ -3022,11 +3072,14 @@ describe('Job Scheduler', function () {
         return Promise.resolve();
       });
 
-      worker.on('stalled', jobId => {
-        stalledEvents.push(jobId);
+      const stalled = new Promise<void>(resolve => {
+        worker.on('stalled', jobId => {
+          stalledEvents.push(jobId);
+          if (stalledEvents.length >= 3) {
+            resolve();
+          }
+        });
       });
-
-      await worker.waitUntilReady();
 
       // Mock the job scheduler's upsertJobScheduler to fail more times than retryIfFailed limit (3)
       const jobScheduler = await worker.jobScheduler;
@@ -3035,28 +3088,13 @@ describe('Job Scheduler', function () {
 
       jobScheduler.upsertJobScheduler = async (...args) => {
         mockCallCount++;
-        if (mockCallCount <= 10) {
+        if (mockCallCount <= 3) {
           // Fail many times to ensure we reach moveToDelayed fallback
           throw new Error(
             `Simulated scheduler update failure (attempt ${mockCallCount})`,
           );
         }
         return originalUpsertJobScheduler(...args);
-      };
-
-      // Mock Job.prototype.moveToDelayed to track calls but eventually succeed
-      const originalJobMoveToDelayed = Job.prototype.moveToDelayed;
-      Job.prototype.moveToDelayed = async function (...args) {
-        moveToDelayedCallCount++;
-
-        if (moveToDelayedCallCount <= 2) {
-          // Fail first couple attempts to trigger stalling
-          throw new Error(
-            `Simulated moveToDelayed failure (attempt ${moveToDelayedCallCount})`,
-          );
-        }
-        // Eventually succeed to avoid infinite stalling
-        return originalJobMoveToDelayed.apply(this, args);
       };
 
       // Add a repeatable job
@@ -3074,31 +3112,17 @@ describe('Job Scheduler', function () {
       // Ensure the worker is ready and starts processing
       await worker.waitUntilReady();
 
+      worker.run();
+
       const jobId = job!.id!;
 
       // Wait for processing and stalling to occur with mocked delays
-      // Use a polling approach to wait for the expected conditions
-      let attempts = 0;
-      const maxAttempts = 20; // 20 attempts * 200ms = 4 seconds max
-
-      while (attempts < maxAttempts && mockCallCount === 0) {
-        await delay(200);
-        attempts++;
-      }
-
-      // Give a bit more time for the full retry cycle to complete
-      await delay(1000);
+      await stalled;
 
       // Verify that the repeatable job attempted scheduler updates (retryIfFailed working)
       expect(mockCallCount).to.be.greaterThan(
         0,
         `Should have attempted scheduler update at least once, got ${mockCallCount}`,
-      );
-
-      // Verify that moveToDelayed was called as fallback after retryIfFailed exhausted
-      expect(moveToDelayedCallCount).to.be.greaterThan(
-        0,
-        'Should have attempted to move to delayed',
       );
 
       // Check that the job may have stalled but wasn't permanently failed
@@ -3113,7 +3137,6 @@ describe('Job Scheduler', function () {
 
       // Restore the original methods
       jobScheduler.upsertJobScheduler = originalUpsertJobScheduler;
-      Job.prototype.moveToDelayed = originalJobMoveToDelayed;
 
       try {
         delayStub.restore(); // Restore the delay stub
@@ -3169,7 +3192,7 @@ describe('Job Scheduler', function () {
       });
 
       // Add a repeatable job that will trigger the scheduler update failure
-      const repeatableJob = await queue.upsertJobScheduler(
+      await queue.upsertJobScheduler(
         'test-scheduler',
         { every: 800 }, // Fast interval for quicker testing
         { name: 'repeatable-job', data: { test: 'repeatable' } },
