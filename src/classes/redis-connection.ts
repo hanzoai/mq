@@ -1,8 +1,9 @@
 import { EventEmitter } from 'events';
-import { default as IORedis } from 'ioredis';
+// Support Hanzo KV, Valkey, and Redis via @hanzo/kv-client
+import { default as HanzoKV } from '@hanzo/kv-client';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import { CONNECTION_CLOSED_ERROR_MSG } from 'ioredis/built/utils';
+import { CONNECTION_CLOSED_ERROR_MSG } from '@hanzo/kv-client/built/utils';
 import { ConnectionOptions, RedisOptions, RedisClient } from '../interfaces';
 import {
   decreaseMaxListeners,
@@ -16,12 +17,12 @@ import { version as packageVersion } from '../version';
 import * as scripts from '../scripts';
 
 const overrideMessage = [
-  'BullMQ: WARNING! Your redis options maxRetriesPerRequest must be null',
-  'and will be overridden by BullMQ.',
+  'Hanzo MQ: WARNING! Your redis options maxRetriesPerRequest must be null',
+  'and will be overridden by Hanzo MQ.',
 ].join(' ');
 
 const deprecationMessage =
-  'BullMQ: Your redis options maxRetriesPerRequest must be null.';
+  'Hanzo MQ: Your redis options maxRetriesPerRequest must be null.';
 
 interface RedisCapabilities {
   canDoubleTimeout: boolean;
@@ -100,7 +101,7 @@ export class RedisConnection extends EventEmitter {
       // and if so, throw an error.
       if (this._client.options.keyPrefix) {
         throw new Error(
-          'BullMQ: ioredis does not support ioredis prefixes, use the prefix option instead.',
+          'Hanzo MQ: keyPrefix is not supported, use the prefix option instead.',
         );
       }
 
@@ -232,7 +233,7 @@ export class RedisConnection extends EventEmitter {
   private async init() {
     if (!this._client) {
       const { url, ...rest } = this.opts;
-      this._client = url ? new IORedis(url, rest) : new IORedis(rest);
+      this._client = url ? new HanzoKV(url, rest) : new HanzoKV(rest);
     }
 
     increaseMaxListeners(this._client, 3);

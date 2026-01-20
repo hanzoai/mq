@@ -1,20 +1,22 @@
 {
-  "name": "bullmq",
+  "name": "@hanzo/mq",
   "version": "5.66.5",
-  "description": "Queue for messages and jobs based on Redis",
-  "homepage": "https://bullmq.io/",
+  "description": "Message queue and job processing based on Hanzo KV (Valkey/Redis compatible)",
+  "homepage": "https://hanzo.ai/",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/esm/index.d.ts",
   "source": "./src/index.ts",
-  "author": "Taskforce.sh Inc.",
+  "author": "Hanzo AI <dev@hanzo.ai>",
   "license": "MIT",
   "keywords": [
-    "bull",
-    "bullmq",
-    "queues",
+    "hanzo",
+    "mq",
+    "queue",
     "jobs",
-    "redis"
+    "valkey",
+    "redis",
+    "bullmq"
   ],
   "files": [
     "dist"
@@ -55,6 +57,7 @@
     "tsc:all": "tsc && tsc -p tsconfig-cjs.json"
   },
   "dependencies": {
+    "@hanzo/kv-client": "^0.3.3",
     "cron-parser": "4.9.0",
     "ioredis": "5.9.1",
     "msgpackr": "1.11.5",
@@ -145,7 +148,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/taskforcesh/bullmq.git"
+    "url": "https://github.com/hanzoai/mq.git"
   },
   "release": {
     "plugins": [
