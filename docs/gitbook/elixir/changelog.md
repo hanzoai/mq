@@ -1,3 +1,31 @@
+## [1.2.6](https://github.com/taskforcesh/bullmq/compare/vex1.2.5...vex1.2.6) (2026-02-11)
+
+
+### Bug Fixes
+
+* important performance fixes and improvements [elixir] ([#3749](https://github.com/taskforcesh/bullmq/issues/3749)) ([5905423](https://github.com/taskforcesh/bullmq/commit/590542314f13590cf68330097f5bb09a96bb240c))
+
+## [1.2.5](https://github.com/taskforcesh/bullmq/compare/vex1.2.4...vex1.2.5) (2026-01-27)
+
+
+### Bug Fixes
+
+* **scheduler:** fix job scheduler not creating subsequent iterations [elixir] ([#3729](https://github.com/taskforcesh/bullmq/issues/3729)) ([3bd23d9](https://github.com/taskforcesh/bullmq/commit/3bd23d990c780ff0808d79499edd803084d2efe8))
+
+## [1.2.4](https://github.com/taskforcesh/bullmq/compare/vex1.2.3...vex1.2.4) (2026-01-24)
+
+
+### Bug Fixes
+
+* fix worker connection name on cluster [#3340](https://github.com/taskforcesh/bullmq/issues/3340) (elixir) (python) ([#3660](https://github.com/taskforcesh/bullmq/issues/3660)) ([fa22e84](https://github.com/taskforcesh/bullmq/commit/fa22e844d29961db95df58f2ae63b440d71c11f6))
+
+## [1.2.3](https://github.com/taskforcesh/bullmq/compare/vex1.2.2...vex1.2.3) (2026-01-22)
+
+
+### Performance Improvements
+
+* **job:** apply limit when removing jobs by max age (python) (elixir) ([#3694](https://github.com/taskforcesh/bullmq/issues/3694)) fixes [#3672](https://github.com/taskforcesh/bullmq/issues/3672) ([a8fc316](https://github.com/taskforcesh/bullmq/commit/a8fc316c0989bd3edb54577ceb02bff0c600aa93))
+
 ## [1.2.2](https://github.com/taskforcesh/bullmq/compare/vex1.2.1...vex1.2.2) (2026-01-14)
 
 

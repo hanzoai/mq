@@ -2,7 +2,6 @@
  * Includes all the scripts needed by the queue and jobs.
  */
 
-/*eslint-env node */
 'use strict';
 import { Packr } from 'msgpackr';
 
@@ -21,7 +20,6 @@ import {
   ParentKeyOpts,
   RedisClient,
   WorkerOptions,
-  KeepJobs,
   MoveToDelayedOpts,
   RepeatableOptions,
   RetryJobOpts,
@@ -34,6 +32,7 @@ import {
   JobType,
   FinishedStatus,
   FinishedPropValAttribute,
+  KeepJobs,
   RedisJobOptions,
   JobProgress,
 } from '../types';
@@ -87,7 +86,13 @@ export class Scripts {
   async isJobInList(listKey: string, jobId: string): Promise<boolean> {
     const client = await this.queue.client;
     let result;
-    if (isRedisVersionLowerThan(this.queue.redisVersion, '6.0.6')) {
+    if (
+      isRedisVersionLowerThan(
+        this.queue.redisVersion,
+        '6.0.6',
+        this.queue.databaseType,
+      )
+    ) {
       result = await this.execCommand(client, 'isJobInList', [listKey, jobId]);
     } else {
       result = await client.lpos(listKey, jobId);
@@ -1027,7 +1032,13 @@ export class Scripts {
       return this.queue.toKey(key);
     });
 
-    if (isRedisVersionLowerThan(this.queue.redisVersion, '6.0.6')) {
+    if (
+      isRedisVersionLowerThan(
+        this.queue.redisVersion,
+        '6.0.6',
+        this.queue.databaseType,
+      )
+    ) {
       return this.execCommand(client, 'getState', keys.concat([jobId]));
     }
     return this.execCommand(client, 'getStateV2', keys.concat([jobId]));

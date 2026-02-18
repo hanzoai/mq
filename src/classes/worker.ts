@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { URL } from 'url';
-import { Redis } from 'ioredis';
+import type { Cluster, Redis } from 'ioredis';
 import * as path from 'path';
 import { v4 } from 'uuid';
 
@@ -340,7 +340,14 @@ export class Worker<
       this.clientName() + (this.opts.name ? `:w:${this.opts.name}` : '');
     this.blockingConnection = new RedisConnection(
       isRedisInstance(opts.connection)
-        ? (<Redis>opts.connection).duplicate({ connectionName })
+        ? (<Redis>opts.connection).isCluster
+          ? (<Cluster>opts.connection).duplicate(undefined, {
+              redisOptions: {
+                ...((<Cluster>opts.connection).options?.redisOptions || {}),
+                connectionName,
+              },
+            })
+          : (<Redis>opts.connection).duplicate({ connectionName })
         : { ...opts.connection, connectionName },
       {
         shared: false,
@@ -500,7 +507,7 @@ export class Worker<
           ...this.opts,
           connection,
         });
-        this._repeat.on('error', e => this.emit.bind(this, e));
+        this._repeat.on('error', this.emit.bind(this, 'error'));
       }
       resolve(this._repeat);
     });
@@ -514,7 +521,7 @@ export class Worker<
           ...this.opts,
           connection,
         });
-        this._jobScheduler.on('error', e => this.emit.bind(this, e));
+        this._jobScheduler.on('error', this.emit.bind(this, 'error'));
       }
       resolve(this._jobScheduler);
     });

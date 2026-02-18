@@ -648,6 +648,22 @@ class TestQueue(unittest.IsolatedAsyncioTestCase):
         
         await queue.close()
 
+    async def test_get_prioritized_jobs(self):
+        """Test getPrioritized method retrieves prioritized jobs"""
+        queue = Queue(queueName, {"prefix": prefix})
+        
+        # Add jobs with priorities
+        for i in range(8):
+            await queue.add("test", {"idx": i}, {"priority": i + 1})
+        
+        # Get prioritized jobs
+        prioritized_jobs = await queue.getPrioritized()
+        
+        # Verify we got all 8 jobs
+        self.assertEqual(len(prioritized_jobs), 8)
+        
+        await queue.close()
+
     async def test_drain_paused_queue(self):
         """Test drain removes paused jobs when queue is paused"""
         queue = Queue(queueName, {"prefix": prefix})
@@ -673,6 +689,36 @@ class TestQueue(unittest.IsolatedAsyncioTestCase):
         # Check that all jobs are removed
         count_after_drain = await queue.getJobCountByTypes("paused")
         self.assertEqual(count_after_drain, 0)
+        
+        await queue.close()
+
+    async def test_default_job_options(self):
+        """Test that defaultJobOptions are applied to jobs added to the queue"""
+        queue_name = f"__test_queue__{uuid4().hex}"
+        default_attempts = 5
+        default_delay = 2000
+        queue = Queue(queue_name, {
+            "prefix": prefix,
+            "defaultJobOptions": {
+                "attempts": default_attempts,
+                "delay": default_delay
+            }
+        })
+        
+        # Add a job without specifying options
+        job1 = await queue.add("test-job", {"foo": "bar"})
+        
+        # Verify that default options were applied
+        self.assertEqual(job1.attempts, default_attempts)
+        self.assertEqual(job1.delay, default_delay)
+        
+        # Add a job with custom options that should override defaults
+        custom_attempts = 10
+        job2 = await queue.add("test-job", {"foo": "baz"}, {"attempts": custom_attempts})
+        
+        # Verify that custom options override defaults
+        self.assertEqual(job2.attempts, custom_attempts)
+        self.assertEqual(job2.delay, default_delay)  # Should still use default delay
         
         await queue.close()
 

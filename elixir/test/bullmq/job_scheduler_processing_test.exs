@@ -23,18 +23,34 @@ defmodule BullMQ.JobSchedulerProcessingTest do
   setup do
     pool_name = :"scheduler_proc_pool_#{System.unique_integer([:positive])}"
 
-    {:ok, _} =
+    # Start the connection pool - unlink so test cleanup doesn't cascade
+    {:ok, pool_pid} =
       BullMQ.RedisConnection.start_link(
         name: pool_name,
         url: @redis_url,
         pool_size: 5
       )
 
+    Process.unlink(pool_pid)
+
     {:ok, raw_conn} = Redix.start_link(@redis_url)
+    Process.unlink(raw_conn)
+
     queue_name = "proc-queue-#{System.unique_integer([:positive])}"
     ctx = Keys.new(queue_name, prefix: @test_prefix)
 
     on_exit(fn ->
+      # Close the pool (waits for scripts to load)
+      BullMQ.RedisConnection.close(pool_name)
+
+      # Stop the raw connection
+      try do
+        Redix.stop(raw_conn)
+      catch
+        :exit, _ -> :ok
+      end
+
+      # Clean up Redis keys
       case Redix.start_link(@redis_url) do
         {:ok, cleanup_conn} ->
           case Redix.command(cleanup_conn, ["KEYS", "#{@test_prefix}:*"]) do
@@ -593,6 +609,195 @@ defmodule BullMQ.JobSchedulerProcessingTest do
       # Should have processed multiple jobs despite the failure
       jobs = :ets.lookup(processed, :job)
       assert length(jobs) >= 2
+
+      Worker.close(worker)
+      QueueEvents.close(events)
+      :ets.delete(processed)
+    end
+
+    @tag :processing
+    @tag timeout: 15_000
+    test "scheduler with multi-colon ID creates multiple iterations", %{
+      conn: conn,
+      raw_conn: raw_conn,
+      queue_name: queue_name,
+      ctx: ctx
+    } do
+      # This test reproduces the scenario reported by users where scheduler IDs
+      # containing multiple colons (like "integration_poll:org:int:disc")
+      # would create only one job and not schedule subsequent iterations.
+      processed = :ets.new(:processed, [:ordered_set, :public])
+      counter = :atomics.new(1, signed: false)
+
+      {:ok, events} =
+        QueueEvents.start_link(
+          queue: queue_name,
+          connection: conn,
+          prefix: @test_prefix
+        )
+
+      QueueEvents.subscribe(events)
+
+      {:ok, worker} =
+        Worker.start_link(
+          queue: queue_name,
+          connection: conn,
+          prefix: @test_prefix,
+          processor: fn job ->
+            idx = :atomics.add_get(counter, 1, 1)
+
+            :ets.insert(
+              processed,
+              {idx,
+               %{
+                 id: job.id,
+                 name: job.name,
+                 repeat_job_key: job.repeat_job_key,
+                 data: job.data,
+                 processed_at: System.system_time(:millisecond)
+               }}
+            )
+
+            :ok
+          end
+        )
+
+      # Use a scheduler ID with multiple colons (mimics user's pattern)
+      # "integration_poll:org_id:integration_id:discriminator_id"
+      org_id = "org-123"
+      integration_id = "int-456"
+      discriminator_id = "disc-789"
+      scheduler_id = "integration_poll:#{org_id}:#{integration_id}:#{discriminator_id}"
+
+      job_data = %{
+        "organization_id" => org_id,
+        "integration_id" => integration_id,
+        "discriminator_id" => discriminator_id
+      }
+
+      {:ok, initial_job} =
+        JobScheduler.upsert(
+          raw_conn,
+          queue_name,
+          scheduler_id,
+          %{every: 200, immediately: true},
+          scheduler_id,
+          job_data,
+          prefix: @test_prefix
+        )
+
+      assert initial_job != nil
+      assert initial_job.repeat_job_key == scheduler_id
+
+      # Verify initial job ID format
+      assert String.starts_with?(initial_job.id, "repeat:#{scheduler_id}:")
+
+      # Wait for at least 3 jobs to be processed
+      result = wait_for_completions(3, 10_000)
+      assert result == :ok, "Expected at least 3 completions but timed out"
+
+      jobs = :ets.tab2list(processed) |> Enum.map(fn {_idx, job} -> job end)
+      assert length(jobs) >= 3, "Expected at least 3 jobs but got #{length(jobs)}"
+
+      # Verify all jobs have the correct scheduler key
+      for job <- jobs do
+        assert job.repeat_job_key == scheduler_id,
+               "Job repeat_job_key mismatch: expected #{scheduler_id}, got #{job.repeat_job_key}"
+
+        assert String.starts_with?(job.id, "repeat:#{scheduler_id}:"),
+               "Job ID format incorrect: #{job.id}"
+      end
+
+      # Verify scheduler still exists in Redis
+      {:ok, score} = Redix.command(raw_conn, ["ZSCORE", Keys.repeat(ctx), scheduler_id])
+      assert score != nil, "Scheduler should still exist in repeat key"
+
+      Worker.close(worker)
+      QueueEvents.close(events)
+      :ets.delete(processed)
+    end
+
+    @tag :processing
+    @tag timeout: 20_000
+    test "scheduler without immediately flag still creates iterations", %{
+      conn: conn,
+      raw_conn: raw_conn,
+      queue_name: queue_name,
+      ctx: ctx
+    } do
+      # This test mimics the user's actual code which does NOT use immediately: true
+      # and has a longer interval
+      processed = :ets.new(:processed, [:ordered_set, :public])
+      counter = :atomics.new(1, signed: false)
+
+      {:ok, events} =
+        QueueEvents.start_link(
+          queue: queue_name,
+          connection: conn,
+          prefix: @test_prefix
+        )
+
+      QueueEvents.subscribe(events)
+
+      {:ok, worker} =
+        Worker.start_link(
+          queue: queue_name,
+          connection: conn,
+          prefix: @test_prefix,
+          processor: fn job ->
+            idx = :atomics.add_get(counter, 1, 1)
+
+            :ets.insert(
+              processed,
+              {idx,
+               %{
+                 id: job.id,
+                 repeat_job_key: job.repeat_job_key,
+                 opts: job.opts,
+                 processed_at: System.system_time(:millisecond)
+               }}
+            )
+
+            :ok
+          end
+        )
+
+      # Use same pattern as user's code: multi-colon ID, no immediately flag
+      scheduler_id = "integration_poll:org-123:int-456:disc-789"
+
+      job_data = %{
+        "organization_id" => "org-123",
+        "integration_id" => "int-456",
+        "discriminator_id" => "disc-789"
+      }
+
+      # Create scheduler with 500ms interval (no immediately flag!)
+      {:ok, _initial_job} =
+        JobScheduler.upsert(
+          raw_conn,
+          queue_name,
+          scheduler_id,
+          %{every: 500},
+          scheduler_id,
+          job_data,
+          prefix: @test_prefix,
+          attempts: 3
+        )
+
+      # Verify initial scheduler state
+      {:ok, score_before} = Redix.command(raw_conn, ["ZSCORE", Keys.repeat(ctx), scheduler_id])
+      assert score_before != nil, "Scheduler should exist"
+
+      # Wait for at least 3 jobs to be processed (each 500ms apart + processing time)
+      result = wait_for_completions(3, 15_000)
+      assert result == :ok, "Expected at least 3 completions but timed out"
+
+      jobs = :ets.tab2list(processed) |> Enum.map(fn {_idx, job} -> job end)
+      assert length(jobs) >= 3, "Expected at least 3 jobs but got #{length(jobs)}"
+
+      # Verify scheduler still exists
+      {:ok, score_after} = Redix.command(raw_conn, ["ZSCORE", Keys.repeat(ctx), scheduler_id])
+      assert score_after != nil, "Scheduler should still exist"
 
       Worker.close(worker)
       QueueEvents.close(events)

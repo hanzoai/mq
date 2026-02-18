@@ -1,3 +1,17 @@
+## [7.42.1](https://github.com/taskforcesh/bullmq-pro/compare/v7.42.0...v7.42.1) (2026-02-12)
+
+
+### Bug Fixes
+
+* **job-scheduler-pro:** consider group option in template option ([#405](https://github.com/taskforcesh/bullmq-pro/issues/405)) ([4c936ca](https://github.com/taskforcesh/bullmq-pro/commit/4c936ca9fb481e800e7dd56e48c10db058245b50))
+
+# [7.42.0](https://github.com/taskforcesh/bullmq-pro/compare/v7.41.1...v7.42.0) (2026-01-28)
+
+
+### Features
+
+* **deps:** upgrade bullmq to v5.67.2 ([#403](https://github.com/taskforcesh/bullmq-pro/issues/403)) ([b4e5b1d](https://github.com/taskforcesh/bullmq-pro/commit/b4e5b1d7d960ec61d39a9190d5d30b332eb2e086))
+
 ## [7.41.1](https://github.com/taskforcesh/bullmq-pro/compare/v7.41.0...v7.41.1) (2026-01-19)
 
 
