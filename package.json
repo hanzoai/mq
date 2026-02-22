@@ -1,6 +1,6 @@
 {
   "name": "@hanzo/mq",
-  "version": "5.69.3",
+  "version": "5.70.0",
   "description": "Message queue and job processing based on Hanzo KV (Valkey/Redis compatible)",
   "homepage": "https://hanzo.ai/",
   "main": "./dist/cjs/index.js",
@@ -71,13 +71,15 @@
     "uuid": "11.1.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "20.4.1",
-    "@commitlint/config-conventional": "20.4.1",
+    "@eslint/js": "9.39.2",
+    "@eslint/eslintrc": "3.3.1",
+    "@commitlint/cli": "^20.4.2",
+    "@commitlint/config-conventional": "20.4.2",
     "@semantic-release/changelog": "6.0.3",
     "@semantic-release/commit-analyzer": "13.0.1",
     "@semantic-release/exec": "7.1.0",
     "@semantic-release/git": "10.0.1",
-    "@semantic-release/github": "12.0.5",
+    "@semantic-release/github": "12.0.6",
     "@semantic-release/npm": "13.1.4",
     "@semantic-release/release-notes-generator": "14.1.0",
     "@types/lodash.defaults": "4.2.9",
@@ -95,23 +97,24 @@
     "eslint-config-prettier": "8.10.2",
     "eslint-plugin-prettier": "4.2.5",
     "eslint-plugin-promise": "7.2.1",
-    "eslint-plugin-tsdoc": "0.5.0",
+    "eslint-plugin-tsdoc": "^0.5.0",
     "fast-glob": "3.3.3",
+    "globals": "15.15.0",
     "husky": "9.1.7",
     "lint-staged": "16.2.7",
     "madge": "8.0.0",
-    "minimatch": "10.1.2",
+    "minimatch": "10.2.2",
     "moment": "2.30.1",
     "prettier": "3.8.1",
     "pretty-quick": "4.2.2",
     "progress": "2.0.3",
-    "rimraf": "6.1.2",
+    "rimraf": "6.1.3",
     "rrule": "2.8.1",
     "semantic-release": "25.0.3",
     "sinon": "21.0.1",
     "test-console": "2.0.0",
     "ts-node": "10.9.2",
-    "typedoc": "0.28.16",
+    "typedoc": "0.28.17",
     "typescript": "5.9.3",
     "vitest": "4.0.18"
   },
@@ -179,5 +182,9 @@
       "@semantic-release/github"
     ]
   },
-  "packageManager": "yarn@1.22.22"
+  "packageManager": "yarn@1.22.22",
+  "resolutions": {
+    "@commitlint/config-validator/ajv": "8.18.0",
+    "eslint-plugin-tsdoc/@microsoft/tsdoc-config/ajv": "8.18.0"
+  }
 }
