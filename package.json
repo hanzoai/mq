@@ -25,10 +25,10 @@
     "build": "npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua",
     "circular:references": "madge --circular --extensions ts ./src",
     "clean:scripts": "rimraf rawScripts src/scripts",
-    "clean:temp:files": "rimraf dist/cjs/bullmq.d.ts dist/esm/bullmq.d.ts dist/tsdoc-metadata.json",
+    "clean:temp:files": "rimraf dist/cjs/mq.d.ts dist/esm/mq.d.ts dist/tsdoc-metadata.json",
     "copy:includes:lua": "cpx \"./src/commands/includes/*.lua\" ./dist/cjs/commands/includes && cpx \"./src/commands/includes/*.lua\" ./dist/esm/commands/includes",
     "copy:lua": "cpx \"./src/commands/*.lua\" ./dist/cjs/commands && cpx \"./src/commands/*.lua\" ./dist/esm/commands",
-    "copy:lua:python": "cpx \"./rawScripts/*.lua\" ./python/bullmq/commands",
+    "copy:lua:python": "cpx \"./rawScripts/*.lua\" ./python/mq/commands",
     "copy:lua:elixir": "cpx \"./rawScripts/*.lua\" ./elixir/priv/scripts",
     "copy:lua:php": "cpx \"./rawScripts/*.lua\" ./php/src/commands",
     "copy:main:type": "cpx \"./dist/esm/classes/main.d.ts\" ./dist/cjs/classes && cpx \"./dist/esm/classes/main-worker.d.ts\" ./dist/cjs/classes",
@@ -61,7 +61,6 @@
     "tsc:all": "tsc && tsc -p tsconfig-cjs.json"
   },
   "dependencies": {
-    "@hanzo/kv-client": "^0.3.3",
     "cron-parser": "4.9.0",
     "ioredis": "5.9.2",
     "msgpackr": "1.11.5",
@@ -71,10 +70,10 @@
     "uuid": "11.1.0"
   },
   "devDependencies": {
-    "@eslint/js": "9.39.2",
-    "@eslint/eslintrc": "3.3.1",
     "@commitlint/cli": "^20.4.2",
     "@commitlint/config-conventional": "20.4.2",
+    "@eslint/eslintrc": "3.3.1",
+    "@eslint/js": "9.39.2",
     "@semantic-release/changelog": "6.0.3",
     "@semantic-release/commit-analyzer": "13.0.1",
     "@semantic-release/exec": "7.1.0",

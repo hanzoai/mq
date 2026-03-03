@@ -151,7 +151,7 @@ export function decreaseMaxListeners(
 export async function removeAllQueueData(
   client: RedisClient,
   queueName: string,
-  prefix = process.env.BULLMQ_TEST_PREFIX || 'bull',
+  prefix = process.env.HANZO_MQ_TEST_PREFIX || 'mq',
 ): Promise<void | boolean> {
   if (client instanceof Cluster) {
     // todo compat with cluster ?

@@ -1,10 +1,11 @@
 {
-  "name": "bullmq-elixir",
-  "description": "Queue for messages and jobs based on Redis for Elixir",
-  "author": "Taskforce.sh Inc.",
+  "name": "@hanzo/mq-elixir",
+  "description": "Queue for messages and jobs based on Hanzo KV (Valkey/Redis compatible) for Elixir",
+  "author": "Hanzo AI <dev@hanzo.ai>",
   "license": "MIT",
   "keywords": [
-    "bullmq",
+    "hanzo",
+    "mq",
     "elixir"
   ],
   "scripts": {

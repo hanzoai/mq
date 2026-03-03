@@ -1,10 +1,11 @@
 {
-  "name": "bullmq-python",
-  "description": "Queue for messages and jobs based on Redis for python",
-  "author": "Taskforce.sh Inc.",
+  "name": "@hanzo/mq-python",
+  "description": "Queue for messages and jobs based on Hanzo KV (Valkey/Redis compatible) for Python",
+  "author": "Hanzo AI <dev@hanzo.ai>",
   "license": "MIT",
   "keywords": [
-    "bullmq",
+    "hanzo",
+    "mq",
     "python"
   ],
   "files": [

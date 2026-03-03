@@ -1,9 +1,8 @@
 import { EventEmitter } from 'events';
-// Support Hanzo KV, Valkey, and Redis via @hanzo/kv-client
-import { default as HanzoKV } from '@hanzo/kv-client';
+import { default as HanzoKV } from 'ioredis';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import { CONNECTION_CLOSED_ERROR_MSG } from '@hanzo/kv-client/built/utils';
+import { CONNECTION_CLOSED_ERROR_MSG } from 'ioredis/built/utils';
 import { ConnectionOptions, RedisOptions, RedisClient } from '../interfaces';
 import {
   decreaseMaxListeners,
