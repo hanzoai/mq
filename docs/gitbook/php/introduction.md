@@ -60,7 +60,7 @@ For development or the latest changes, install directly from the repository:
 Installing from VCS requires building the Lua scripts. After `composer install`, run from the monorepo root:
 
 ```bash
-yarn install && yarn build && yarn copy:lua:php
+pnpm install && pnpm build && pnpm copy:lua:php
 ```
 
 {% endhint %}

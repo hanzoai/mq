@@ -2,7 +2,7 @@
 
 ## Commit messages
 
-This package is using semantic-release to automate the release process, and this depends on a specific [format](https://github.com/angular/angular/blob/master/CONTRIBUTING.md#-commit-message-format) for commit messages. In case you are new using semantic-release or you just want a helper to make your commits, please run `yarn cm` to use `commitizen` to properly format your commit messages so they can be automatically processed and included in release notes.
+This package is using semantic-release to automate the release process, and this depends on a specific [format](https://github.com/angular/angular/blob/master/CONTRIBUTING.md#-commit-message-format) for commit messages. In case you are new using semantic-release or you just want a helper to make your commits, please run `pnpm cm` to use `commitizen` to properly format your commit messages so they can be automatically processed and included in release notes.
 
 ## Pull request testing
 
@@ -12,8 +12,8 @@ Some notes on testing and releasing.
 - Please make sure that all test cases are passing by running:
 
 ```sh
-yarn
-yarn test
+pnpm install
+pnpm test
 ```
 
 - Provide feedback on the PR about your changes and results.

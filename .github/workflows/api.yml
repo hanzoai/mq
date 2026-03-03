@@ -18,24 +18,26 @@ jobs:
         with:
           # check out all branches
           fetch-depth: 0
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'yarn'
-      - name: yarn install
+          cache: 'pnpm'
+      - name: pnpm install
         run: |
-          yarn install
+          pnpm install
       - name: build
         run: |
           git config --global user.email "manast@taskforce.sh"
           git config --global user.name "manast"
           git checkout docs-api
           git merge master --no-edit -m "chore: merge master branch on $(date +%F)"
-          yarn pretest
-          yarn docs:json
+          pnpm pretest
+          pnpm docs:json
           git add .
-          yarn docs:merge
+          pnpm docs:merge
         env:
           CI: true
       - name: deploy

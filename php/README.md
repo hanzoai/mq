@@ -61,9 +61,9 @@ After installing, you need to build the Lua scripts:
 ```bash
 cd vendor/taskforcesh/bullmq-php
 # From the monorepo root:
-yarn install
-yarn build
-yarn copy:lua:php
+pnpm install
+pnpm build
+pnpm copy:lua:php
 ```
 
 > **Note:** Stable releases are tagged with the format `vphp{version}` (e.g., `vphp1.0.0`). Check the [releases page](https://github.com/taskforcesh/bullmq/releases) for available versions.
