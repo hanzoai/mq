@@ -116,23 +116,23 @@ const originalTree = await flow.add({
 
 ## Features
 
-| Feature                    | @hanzo/mq |
-| :------------------------- | :-------: |
+| Feature                    |         @hanzo/mq         |
+| :------------------------- | :-----------------------: |
 | Backend                    | Hanzo KV / Valkey / Redis |
-| Parent/Child Dependencies  | ✓ |
-| Deduplication (Debouncing) | ✓ |
-| Deduplication (Throttling) | ✓ |
-| Priorities                 | ✓ |
-| Concurrency                | ✓ |
-| Delayed jobs               | ✓ |
-| Global events              | ✓ |
-| Rate Limiter               | ✓ |
-| Pause/Resume               | ✓ |
-| Sandboxed worker           | ✓ |
-| Repeatable jobs            | ✓ |
-| Atomic ops                 | ✓ |
-| Persistence                | ✓ |
-| UI                         | ✓ |
+| Parent/Child Dependencies  |             ✓             |
+| Deduplication (Debouncing) |             ✓             |
+| Deduplication (Throttling) |             ✓             |
+| Priorities                 |             ✓             |
+| Concurrency                |             ✓             |
+| Delayed jobs               |             ✓             |
+| Global events              |             ✓             |
+| Rate Limiter               |             ✓             |
+| Pause/Resume               |             ✓             |
+| Sandboxed worker           |             ✓             |
+| Repeatable jobs            |             ✓             |
+| Atomic ops                 |             ✓             |
+| Persistence                |             ✓             |
+| UI                         |             ✓             |
 
 ## Connection Options
 
@@ -165,7 +165,7 @@ const queue = new Queue('myqueue', {
 
 ## Documentation
 
-For detailed documentation, see the [BullMQ documentation](https://docs.bullmq.io) as @hanzo/mq maintains API compatibility.
+Full API documentation is available at [docs.hanzo.ai/mq](https://docs.hanzo.ai/mq). @hanzo/mq maintains API compatibility with [BullMQ](https://docs.bullmq.io), so upstream docs are also a useful reference.
 
 ## Contributing
 

@@ -15,8 +15,7 @@
     "queue",
     "jobs",
     "valkey",
-    "redis",
-    "bullmq"
+    "redis"
   ],
   "files": [
     "dist"
